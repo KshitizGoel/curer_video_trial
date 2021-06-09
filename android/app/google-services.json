@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "361495294175",
+    "project_id": "curer-a6bec",
+    "storage_bucket": "curer-a6bec.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:361495294175:android:0a27366d00d31a7678b96a",
+        "android_client_info": {
+          "package_name": "com.example.agora_trial_curer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "361495294175-2vc4a41j7s7v46paqohitqt6vvp9srg9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyctmHlbgVvIctr80YyeRR9EQPqIEo2Ek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "361495294175-2vc4a41j7s7v46paqohitqt6vvp9srg9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

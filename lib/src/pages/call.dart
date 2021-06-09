@@ -1,9 +1,13 @@
 import 'dart:async';
-
+import 'dart:async';
+import 'dart:io';
 import 'package:agora_rtc_engine/rtc_engine.dart';
 import 'package:agora_rtc_engine/rtc_local_view.dart' as RtcLocalView;
 import 'package:agora_rtc_engine/rtc_remote_view.dart' as RtcRemoteView;
+import 'package:agora_trial_curer/src/call_model.dart';
+import 'package:callkeep/callkeep.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import '../utils/settings.dart';
 
@@ -30,6 +34,14 @@ class _CallPageState extends State<CallPage> {
   final _infoStrings = <String>[];
   bool muted = false;
   RtcEngine _engine;
+  Map<String, Call> calls = {};
+
+
+  final FlutterCallkeep _callKeep = FlutterCallkeep();
+  bool _callKeepInited = false;
+
+  String newUUID() => Uuid().v4();
+
 
   @override
   void dispose() {
@@ -46,6 +58,17 @@ class _CallPageState extends State<CallPage> {
     super.initState();
     // initialize agora sdk
     initialize();
+    _callKeep.on(CallKeepDidDisplayIncomingCall(), didDisplayIncomingCall);
+
+  }
+
+  void didDisplayIncomingCall(CallKeepDidDisplayIncomingCall event) {
+    var callUUID = event.callUUID;
+    var number = event.handle;
+    print('[displayIncomingCall] $callUUID number: $number');
+    setState(() {
+      calls[callUUID] = Call(number);
+    });
   }
 
   Future<void> initialize() async {
@@ -70,8 +93,7 @@ class _CallPageState extends State<CallPage> {
     await _engine.joinChannel(Token, widget.channelName, null, 0);
   }
 
-  /// Create agora sdk instance and initialize
-  /// Basically setting up the roles of Channel and Client enabling the video
+
   Future<void> _initAgoraRtcEngine() async {
     _engine = await RtcEngine.create(APP_ID);
     await _engine.enableVideo();
@@ -79,9 +101,7 @@ class _CallPageState extends State<CallPage> {
     await _engine.setClientRole(widget.role);
   }
 
-  /// Add agora event handlers
-  /// Gives the insight of event handlers that can trigger a message if a client
-  /// leaves joins etc.
+
   void _addAgoraEventHandlers() {
     _engine.setEventHandler(RtcEngineEventHandler(error: (code) {
       setState(() {
@@ -118,7 +138,6 @@ class _CallPageState extends State<CallPage> {
     }));
   }
 
-  /// Helper function to get list of native views
   List<Widget> _getRenderViews() {
     final List<StatefulWidget> list = [];
     if (widget.role == ClientRole.Broadcaster) {
@@ -128,12 +147,10 @@ class _CallPageState extends State<CallPage> {
     return list;
   }
 
-  /// Video view wrapper
   Widget _videoView(view) {
     return Expanded(child: Container(child: view));
   }
 
-  /// Video view row wrapper
   Widget _expandedVideoRow(List<Widget> views) {
     final wrappedViews = views.map<Widget>(_videoView).toList();
     return Expanded(
@@ -143,7 +160,6 @@ class _CallPageState extends State<CallPage> {
     );
   }
 
-  /// Video layout wrapper
   Widget _viewRows() {
     final views = _getRenderViews();
     switch (views.length) {
@@ -181,7 +197,6 @@ class _CallPageState extends State<CallPage> {
     return Container();
   }
 
-  /// Toolbar layout
   Widget _toolbar() {
     if (widget.role == ClientRole.Audience) return Container();
     return Container(
@@ -225,7 +240,7 @@ class _CallPageState extends State<CallPage> {
             elevation: 2.0,
             fillColor: Colors.white,
             padding: const EdgeInsets.all(12.0),
-          )
+          ),
         ],
       ),
     );
@@ -296,6 +311,29 @@ class _CallPageState extends State<CallPage> {
     _engine.switchCamera();
   }
 
+  Future<void> notifyThePatient(String number) async {
+    final String callUUID = newUUID();
+    setState(() {
+      calls[callUUID] = Call(number);
+    });
+    print('Display incoming call now');
+    final bool hasPhoneAccount = await _callKeep.hasPhoneAccount();
+    // if (!hasPhoneAccount) {
+    //   await _callKeep.hasDefaultPhoneAccount(context, <String, dynamic>{
+    //     'alertTitle': 'Permissions required',
+    //     'alertDescription':
+    //     'This application needs to access your phone accounts',
+    //     'cancelButton': 'Cancel',
+    //     'okButton': 'ok',
+    //   });
+    // }
+
+    print('[displayIncomingCall] $callUUID number: $number');
+    _callKeep.startCall(callUUID, number,'Kshitiz',
+        handleType: 'number', hasVideo: true);
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -304,6 +342,17 @@ class _CallPageState extends State<CallPage> {
         toolbarHeight: 50,
         backgroundColor: Colors.lightBlueAccent.withOpacity(0.20),
         title: Text(widget.phoneNumber , style: TextStyle(color: Colors.yellow[800]),),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blue,
+        onPressed: (){
+         notifyThePatient('9555069129');
+        },
+        child: Icon(
+          Icons.notifications,
+          color: Colors.white,
+        ),
       ),
       backgroundColor: Colors.black,
       body: Center(
