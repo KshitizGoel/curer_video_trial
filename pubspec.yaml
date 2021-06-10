@@ -24,6 +24,7 @@ dependencies:
   uuid: ^3.0.4
   firebase_core: ^1.2.1
   firebase_database: ^7.1.0
+  firebase_messaging: ^10.0.1
 
 #  connectycube_flutter_call_kit: ^0.0.1-dev.1
 

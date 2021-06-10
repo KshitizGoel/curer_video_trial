@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:async';
-import 'dart:io';
 import 'package:agora_rtc_engine/rtc_engine.dart';
 import 'package:agora_rtc_engine/rtc_local_view.dart' as RtcLocalView;
 import 'package:agora_rtc_engine/rtc_remote_view.dart' as RtcRemoteView;
 import 'package:agora_trial_curer/src/call_model.dart';
 import 'package:callkeep/callkeep.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,11 +17,9 @@ class CallPage extends StatefulWidget {
   /// non-modifiable client role of the page
   final ClientRole role;
 
-  /// phone Number of client to give notification to the user
-  final String phoneNumber;
 
   /// Creates a call page with given channel name.
-  const CallPage({Key key, this.channelName, this.role, this.phoneNumber})
+  const CallPage({Key key, this.channelName, this.role })
       : super(key: key);
 
   @override
@@ -35,6 +32,9 @@ class _CallPageState extends State<CallPage> {
   bool muted = false;
   RtcEngine _engine;
   Map<String, Call> calls = {};
+
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
 
 
   final FlutterCallkeep _callKeep = FlutterCallkeep();
@@ -58,18 +58,9 @@ class _CallPageState extends State<CallPage> {
     super.initState();
     // initialize agora sdk
     initialize();
-    _callKeep.on(CallKeepDidDisplayIncomingCall(), didDisplayIncomingCall);
 
   }
 
-  void didDisplayIncomingCall(CallKeepDidDisplayIncomingCall event) {
-    var callUUID = event.callUUID;
-    var number = event.handle;
-    print('[displayIncomingCall] $callUUID number: $number');
-    setState(() {
-      calls[callUUID] = Call(number);
-    });
-  }
 
   Future<void> initialize() async {
     if (APP_ID.isEmpty) {
@@ -311,43 +302,17 @@ class _CallPageState extends State<CallPage> {
     _engine.switchCamera();
   }
 
-  Future<void> notifyThePatient(String number) async {
-    final String callUUID = newUUID();
-    setState(() {
-      calls[callUUID] = Call(number);
-    });
-    print('Display incoming call now');
-    final bool hasPhoneAccount = await _callKeep.hasPhoneAccount();
-    // if (!hasPhoneAccount) {
-    //   await _callKeep.hasDefaultPhoneAccount(context, <String, dynamic>{
-    //     'alertTitle': 'Permissions required',
-    //     'alertDescription':
-    //     'This application needs to access your phone accounts',
-    //     'cancelButton': 'Cancel',
-    //     'okButton': 'ok',
-    //   });
-    // }
-
-    print('[displayIncomingCall] $callUUID number: $number');
-    _callKeep.startCall(callUUID, number,'Kshitiz',
-        handleType: 'number', hasVideo: true);
-  }
 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        toolbarHeight: 50,
-        backgroundColor: Colors.lightBlueAccent.withOpacity(0.20),
-        title: Text(widget.phoneNumber , style: TextStyle(color: Colors.yellow[800]),),
-      ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blue,
         onPressed: (){
-         notifyThePatient('9555069129');
+         //notifyThePatient('9555069129');
         },
         child: Icon(
           Icons.notifications,
